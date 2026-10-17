@@ -1,5 +1,5 @@
 ##
-# Random Post v1.1 by (Carl M. Gregory) MC_8 <gregory@worldinter.net>
+# Random Post v1.2 by (Carl M. Gregory) MC_8 <gregory@worldinter.net>
 #
 # My SVS Website - http://mc.purehype.net/
 ##
@@ -13,6 +13,9 @@
 ##
 # History
 ##
+# v1.2 (08.29.01)
+#  MC_8 - Phillip Lewis - Added the %num replacment veriable.
+#
 # v1.1 (02.08.01)
 #  MC_8 - BeastNH - Added mc_rap(dcc_access) veriable.  It defines who can add
 #                   and remove random post entries.
@@ -24,7 +27,7 @@
 ##
 # Commands (DCC Chat)
 ##
-# .randompost [add <[global/#channel] post>/remove <number>/search <string>]
+# .randompost [add [global/#channel] <post>/remove <number>/search <string>]
 #      If you don't specify add/remove/search, it will show you all the random
 #      posts you have stored.
 #  
@@ -35,8 +38,12 @@
 #      If you don't specify global/#channel when doing add, it will default to
 #      global (post is good for all channels).
 #
-#      There are replacment veriables for the add post, they are %chan %botnick
-#      %time %date
+#      There are replacment veriables for the add post, they are
+#       %chan    -- The channel.
+#       %botnick -- The bot's irc nick.
+#       %time    -- Current time, in '12:60 xM' format.
+#       %date    -- Current date, in 'Aug. 29, 2001' format.
+#       %num     -- The record number of current post.
 ##
 
 ##
@@ -94,8 +101,8 @@ set mc_rap(svs:stableonly) 0
 
 
 ### Do not edit past this part ###
-set mc_rap(version) v1.1
-set mc_rap(svs:script) "randompost 001001000000"
+set mc_rap(version) v1.2
+set mc_rap(svs:script) "randompost 001002000000"
 set mc_rap(svs:server) "mc.purehype.net 8085"
 
 if {$numversion < "1050000"} {
@@ -143,7 +150,8 @@ proc mc:rap:inter:utimer {chan} {
   set mc_rap(:$chan:) $rand
  } {set rand 0}
  set temp [lindex $temp $rand]
- set temp [mc:rap:inter:replace $temp "%time {[strftime "%l:%M %PM"]} %date {[strftime "%b. %d, %Y"]} %chan {$repchan} %botnick {$botnick}"]
+ set num [lindex $temp 0]
+ set temp [mc:rap:inter:replace $temp "%num $num %time {[strftime "%l:%M %PM"]} %date {[strftime "%b. %d, %Y"]} %chan {$repchan} %botnick {$botnick}"]
  foreach post $temp {puthelp "PRIVMSG $chan :$post"}
 }
 
