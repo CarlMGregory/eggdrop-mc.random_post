@@ -1,5 +1,5 @@
 ##
-# Random Post v1.0 by (Carl M. Gregory) MC_8 <gregory@worldinter.net>
+# Random Post v1.1 by (Carl M. Gregory) MC_8 <gregory@worldinter.net>
 #
 # My SVS Website - http://mc.purehype.net/
 ##
@@ -13,6 +13,10 @@
 ##
 # History
 ##
+# v1.1 (02.08.01)
+#  MC_8 - BeastNH - Added mc_rap(dcc_access) veriable.  It defines who can add
+#                   and remove random post entries.
+#
 # v1.0 (02.03.01)
 #  MC_8 - BeastNH - inital release
 ##
@@ -51,7 +55,13 @@
 # What do you want the database filename to be?
 set mc_rap(database) ".randompost.dat"
 
-## MC SVS (Script Version Server) v1.1 ##
+# What flaged users should have access to perform the dcc .randompost add and remove
+# commands?
+# Flag structur:  <global>|<channel>
+# Set to -|- to let anyone have access (anyone that can dcc chat to the bot that is).
+set mc_rap(dcc_access) o|o
+
+## MC SVS (Script Version Server) v1.2 ##
 # Do you want the bot to connection to MC_8's SVS to see if there are newer versions
 # of this script avilable?  It will only tell you -- It's up to you to get the newest
 # version (I decided not to auto update the code, there may be new features in the
@@ -69,15 +79,23 @@ set mc_rap(svs:enabled) 1
 set mc_rap(svs:check) 3
 
 # Upon finding a newer version, who do you want to notify via note?
+# Only the admin of the bot should really be worried about these notes,
+# there the ones that keep everything up to par on the bots.
 # Seperate each user with a " " (space).
 set mc_rap(svs:notify) "MC_8"
+
+# Do you want even beta version notified to whomever you have set?  Or just
+# stable releases of the script?
+#  0 = Tell me about all version, even beta versions.
+#  1 = Just tell me about new stable versions.
+set mc_rap(svs:stableonly) 0
 
 
 
 
 ### Do not edit past this part ###
-set mc_rap(version) v1.0
-set mc_rap(svs:script) "randompost 001000000000"
+set mc_rap(version) v1.1
+set mc_rap(svs:script) "randompost 001001000000"
 set mc_rap(svs:server) "mc.purehype.net 8085"
 
 if {$numversion < "1050000"} {
@@ -142,6 +160,17 @@ proc mc:rap:dcc:randompost {hand idx args} {
     set chan [string tolower [lindex $args 0]]
     set args [lrange $args 1 e]
    } {set chan global}
+   if {$chan == "global"} {
+    if {(![matchattr $hand [lindex [split $mc_rap(dcc_access) |] 0] $chan]) && ($mc_rap(dcc_access) != "-|-")} {
+     putdcc $idx "You do not have access to perform this command."
+     return 0
+    }
+   } {
+    if {(![matchattr $hand $mc_rap(dcc_access) $chan]) && ($mc_rap(dcc_access) != "-|-")} {
+     putdcc $idx "You do not have access to perform this command."
+     return 0
+    }
+   }
    if {$args == ""} {putdcc $idx "What?  You need '.randompost help'";return}
    set args [mc:rap:inter:replace $args "<br> \010 <Br> \010 <bR> \010 <BR> \010"]
    set args [split $args \010]
@@ -161,8 +190,22 @@ proc mc:rap:dcc:randompost {hand idx args} {
    set io [open $mc_rap(database) r];set temp "";set found 0
    while {![eof $io]} {
     set line [gets $io]
-    if {[lindex $line 0] != [lindex $args 0]} {set temp "$temp {$line}"} {set found 1}
+    if {[lindex $line 0] != [lindex $args 0]} {set temp "$temp {$line}"} {
+     set chan [string tolower [lindex $line 1]]
+     set found 1
+    }
    };close $io
+   if {$chan == "global"} {
+    if {(![matchattr $hand [lindex [split $mc_rap(dcc_access) |] 0] $chan]) && ($mc_rap(dcc_access) != "-|-")} {
+     putdcc $idx "You do not have access to perform this command."
+     return 0
+    }
+   } {
+    if {(![matchattr $hand $mc_rap(dcc_access) $chan]) && ($mc_rap(dcc_access) != "-|-")} {
+     putdcc $idx "You do not have access to perform this command."
+     return 0
+    }
+   }
    if {!$found} {putdcc $idx "Entrie [lindex $args 0] not found.";return};unset found
    set temp [string trim $temp]
    set io [open $mc_rap(database) w];foreach post $temp {puts $io $post};close $io
@@ -238,6 +281,11 @@ proc mc:rap:inter:replace {string subs} {
 if {$mc_rap(svs:enabled)} {
  if {($mc_rap(svs:check) > "23") || ($mc_rap(svs:check) < "0")} {set mc_rap(svs:check) 00}
  if {[string length $mc_rap(svs:check)] == "1"} {set mc_rap(svs:check) 0$mc_rap(svs:check)}
+ if {$mc_rap(svs:stableonly)} {
+  set mc_rap(svs:script) [string range $mc_rap(svs:script) 0 [expr [string length $mc_rap(svs:script)]-4]]999
+ }
+ catch {unbind time - "00 $mc_rap(svs:oldcheck) * * *" mc:rap:svs:time}
+ set mc_rap(svs:oldcheck) $mc_rap(svs:check)
  bind time - "00 $mc_rap(svs:check) * * *" mc:rap:svs:time
  proc mc:rap:svs:time {min hour day month year} {
   global mc_rap
@@ -253,6 +301,7 @@ proc mc:rap:svs:interface {idx args} {
   003 {
    set args [lrange $args 1 e]
    if {[lindex $args 0] != [lindex $mc_rap(svs:script) 0]} {return 0}
+   putdcc $idx q
    if {[lindex $args 1] > [lindex $mc_rap(svs:script) 1]} {
     set note [mc:rap:svs:replace [lindex $args 7] "%0 {[lindex $args 0]} %1 {[lindex $args 1]} %2 {[lindex $args 2]}"]
     set note [mc:rap:svs:replace $note "%3 {[lindex $args 3]} %4 {[lindex $args 4]} %5 {[lindex $args 5]}"]
@@ -262,14 +311,21 @@ proc mc:rap:svs:interface {idx args} {
     set note [mc:rap:svs:replace $note "%15 {[lindex $args 15]} %16 {[lindex $args 16]} %17 {[lindex $args 17]}"]
     set note [mc:rap:svs:replace $note "%18 {[lindex $args 18]} %19 {[lindex $args 19]} %20 {[lindex $args 20]}"]
     foreach notify [join [split $mc_rap(svs:notify) ",;"]] {
-     switch -- [sendnote SVS $notify [mc:rap:svs:replace $note "%nick {$notify}"]] {
+     set outnote [mc:rap:svs:replace $note "%nick {$notify}"]
+     if {[string match "*$outnote*" "[notes $notify -[notes $notify]]"]} {
+      set cont 0
+      foreach unote [notes $notify -[notes $notify]] {
+       if {$outnote == [lindex $unote 2]} {set cont 1;break}
+      };if {$cont} {continue}
+     }
+     switch -- [sendnote SVS $notify $outnote] {
       0 {putlog "MC SVS for [lindex $mc_rap(svs:script) 0] had some errors updating $notify on current version of script; unknown reason!"}
       3 {putlog "MC SVS for [lindex $mc_rap(svs:script) 0] had some errors updating $notify on current version of script; notebox too full!"}
      }
     }
-   } ; putdcc $idx q
+   }
   }
- } ; return 0
+ };return 0
 }
 proc mc:rap:svs:replace {string subs} {
  if {[llength $subs] == "1"} {set subs [lindex $subs 0]}
