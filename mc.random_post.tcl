@@ -1,5 +1,5 @@
 ##
-# Random Post v1.2 by (Carl M. Gregory) MC_8 <gregory@worldinter.net>
+# Random Post v1.2.1 by (Carl M. Gregory) MC_8 <gregory@worldinter.net>
 #
 # My SVS Website - http://mc.purehype.net/
 ##
@@ -13,6 +13,9 @@
 ##
 # History
 ##
+# v1.2.1 (09.17.01)
+#  MC_8 - Snillting - Global posting wasn't following rules set by mc_rap(dcc_access).
+#
 # v1.2 (08.29.01)
 #  MC_8 - Phillip Lewis - Added the %num replacment veriable.
 #
@@ -101,8 +104,8 @@ set mc_rap(svs:stableonly) 0
 
 
 ### Do not edit past this part ###
-set mc_rap(version) v1.2
-set mc_rap(svs:script) "randompost 001002000000"
+set mc_rap(version) v1.2.1
+set mc_rap(svs:script) "randompost 001002001000"
 set mc_rap(svs:server) "mc.purehype.net 8085"
 
 if {$numversion < "1050000"} {
@@ -169,7 +172,7 @@ proc mc:rap:dcc:randompost {hand idx args} {
     set args [lrange $args 1 e]
    } {set chan global}
    if {$chan == "global"} {
-    if {(![matchattr $hand [lindex [split $mc_rap(dcc_access) |] 0] $chan]) && ($mc_rap(dcc_access) != "-|-")} {
+    if {(![matchattr $hand [lindex [split $mc_rap(dcc_access) |] 0]|]) && ($mc_rap(dcc_access) != "-|-")} {
      putdcc $idx "You do not have access to perform this command."
      return 0
     }
@@ -204,7 +207,7 @@ proc mc:rap:dcc:randompost {hand idx args} {
     }
    };close $io
    if {$chan == "global"} {
-    if {(![matchattr $hand [lindex [split $mc_rap(dcc_access) |] 0] $chan]) && ($mc_rap(dcc_access) != "-|-")} {
+    if {(![matchattr $hand [lindex [split $mc_rap(dcc_access) |] 0]|]) && ($mc_rap(dcc_access) != "-|-")} {
      putdcc $idx "You do not have access to perform this command."
      return 0
     }
